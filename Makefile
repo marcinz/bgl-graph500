@@ -25,6 +25,8 @@ ifeq ($(BUILD_XMT), Yes)
 BIN = xmt-csr/xmt-csr xmt-csr-local/xmt-csr-local
 endif
 
+BIN += bgl/adjacency-list
+
 GENERATOR_OBJS_SEQ=btrd_binomial_distribution.o splittable_mrg.o	\
 	mrg_transitions.o graph_generator.o permutation_gen.o		\
 	make_graph.o scramble_edges.o utils.o
@@ -38,6 +40,8 @@ make-edgelist:	make-edgelist.c options.c rmat.c kronecker.c prng.c \
 
 seq-list/seq-list: seq-list/seq-list.c $(GRAPH500_SOURCES) libgenerator-seq.a
 seq-csr/seq-csr: seq-csr/seq-csr.c $(GRAPH500_SOURCES) libgenerator-seq.a
+
+bgl/adjacency-list: bgl/adjacency-list.cc $(GRAPH500_SOURCES:.c=.o) libgenerator-seq.a
 
 omp-csr/omp-csr: CFLAGS:=$(CFLAGS) $(CFLAGS_OPENMP)
 omp-csr/omp-csr: omp-csr/omp-csr.c $(GRAPH500_SOURCES) libgenerator-omp.a
