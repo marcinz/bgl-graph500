@@ -4,8 +4,13 @@
 #include <utility>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/visitors.hpp>
+#include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/graph_utility.hpp>
+
 using namespace boost;
 
+#include <stdio.h>
 #include <stdint.h>
 
 extern "C" {
@@ -20,7 +25,16 @@ int
 create_graph_from_edgelist (int64_t *IJ_in, int64_t nedge)
 {
   int err = 0;
-
+  /*
+  {
+    printf("[ ");
+    for( int64_t i = 0; i < nedge; i++ )
+      {
+	printf("<%" PRId64 ",%" PRId64 "> ", IJ_in[2*i], IJ_in[2*i+1]);
+      }
+    printf(" ]\n");
+  }
+  */
   // how many vertices do we have?
   int64_t num_vertices = 0;
   for( int64_t k = 0; k < nedge*2; k++ )
@@ -43,6 +57,28 @@ make_bfs_tree (int64_t *bfs_tree_out, int64_t *max_vtx_out,
 {
   int err = 0;
 
+  *max_vtx_out = boost::num_vertices(*g) - 1;
+  typedef Graph::vertex_descriptor Vertex;
+  std::vector<Vertex> p(boost::num_vertices(*g));
+  typedef std::vector<Vertex>::value_type* Piter;
+
+  for( int64_t i = 0; i < boost::num_vertices(*g); i++ )
+    {p[i] = -1;}
+  p[srcvtx] = srcvtx;
+
+  boost::breadth_first_search
+    (*g, srcvtx, 
+     boost::visitor(boost::make_bfs_visitor
+		    (boost::record_predecessors(&p[0],
+						boost::on_tree_edge()) )));
+  for( int64_t i = 0; i < boost::num_vertices(*g); i++ )
+    {bfs_tree_out[i] = p[i];}
+  /*
+  printf("source %" PRId64 ": [ ", srcvtx);
+  for( int64_t i = 0; i < boost::num_vertices(*g); i++ )
+    {printf("%" PRId64 " ", p[i]);}
+  printf("]\n");
+  */
   return err;
 }
 
