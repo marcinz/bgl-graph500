@@ -27,7 +27,24 @@ extern "C" {
 #include "../graph500.h"
 }
 
-typedef compressed_sparse_row_graph<directedS> Graph;
+template<typename T, typename Sequence = std::vector<T> >
+class queue {
+public:
+  queue() : c(), _bottom(0), _top(0) {}
+  queue(size_t sz) : c(sz), _bottom(0), _top(0) {}
+  explicit queue(Sequence&& __c) : c(std::forward<Sequence>(__c)), _bottom(0), _top(0) {}
+  
+  void push(T&& v) { c[_top++] = std::forward<T>(v); }
+  void push(T& v) { c[_top++] = v; }
+  T& top() { return c[_bottom]; }
+  void pop() { ++_bottom; }
+  bool empty() { return _bottom == _top; }
+private:
+  Sequence c;
+  size_t _bottom, _top;
+};
+
+typedef compressed_sparse_row_graph<directedS, no_property, no_property, no_property, int64_t> Graph;
 static Graph *g;
 
 typedef std::pair<int64_t, int64_t> edge_t;
@@ -74,27 +91,35 @@ make_bfs_tree (int64_t *bfs_tree_out, int64_t *max_vtx_out,
 	       int64_t srcvtx)
 {
   int err = 0;
+  const Graph &graph = *g;
 
-  *max_vtx_out = boost::num_vertices(*g) - 1;
+  int64_t * restrict p = bfs_tree_out;
+  *max_vtx_out = boost::num_vertices(graph) - 1;
   typedef Graph::vertex_descriptor Vertex;
-  std::vector<Vertex> p(boost::num_vertices(*g));
+  //std::vector<Vertex> p(boost::num_vertices(graph));
   typedef std::vector<Vertex>::value_type* Piter;
 
-  for( int64_t i = 0; i < boost::num_vertices(*g); i++ )
-    {p[i] = -1;}
+//    for( int64_t i = 0; i < boost::num_vertices(graph); i++ )
+//      {p[i] = -1;}
+//    p[srcvtx] = srcvtx;
+
+  for (int64_t k1 = 0; k1 < boost::num_vertices(graph); ++k1)
+    p[k1] = -1;
   p[srcvtx] = srcvtx;
 
+  ::queue<Vertex> buffer(boost::num_vertices(graph));
   boost::breadth_first_search
-    (*g, srcvtx, 
+    (graph, srcvtx, 
      boost::visitor(boost::make_bfs_visitor
-		    (boost::record_predecessors(&p[0],
-						boost::on_tree_edge()) )));
-  for( int64_t i = 0; i < boost::num_vertices(*g); i++ )
-    {bfs_tree_out[i] = p[i];}
+                   (boost::record_predecessors(&p[0],
+                                               boost::on_tree_edge()) ))
+     .buffer(buffer));
+//    for( int64_t i = 0; i < boost::num_vertices(graph); i++ )
+//      {bfs_tree_out[i] = p[i];}
 
   /*
   printf("source %" PRId64 ": [ ", srcvtx);
-  for( int64_t i = 0; i < boost::num_vertices(*g); i++ )
+  for( int64_t i = 0; i < boost::num_vertices(graph); i++ )
     {printf("%" PRId64 " ", p[i]);}
   printf("]\n");
   */
