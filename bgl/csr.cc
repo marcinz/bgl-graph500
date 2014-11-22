@@ -14,7 +14,7 @@
 #include <boost/graph/visitors.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/graph_utility.hpp>
-
+#include <boost/graph/one_bit_color_map.hpp>
 #include <boost/graph/graphviz.hpp>
 
 using namespace boost;
@@ -44,16 +44,34 @@ private:
   size_t _bottom, _top;
 };
 
-templat<typename Sequence>
+template<typename Sequence, typename IndexMap, typename Value, Value v_white>
 class pred_to_color {
 public:
-  pred_to_color(const Sequence &seq) : seq(seq) {}
+  pred_to_color(const Sequence &seq, const IndexMap& index = IndexMap()) : seq(seq), index(index) {}
+
+  typedef typename property_traits<IndexMap>::key_type key_type;
+  typedef one_bit_color_type value_type;
+  typedef void reference;
+  typedef read_write_property_map_tag category;
 
   template<typename T>
-  friend void put(T t)
+  friend void put(const pred_to_color& map, key_type k, value_type v) { }
+  friend one_bit_color_type get(const pred_to_color& map, key_type k) {
+    if(seq(get(index, k)) == v_white)
+      return one_bit_white;
+    else
+      return one_bit_not_white;
+  }
 private:
   const Sequence &seq;
+  const IndexMap index;
 };
+
+template<Value v_white, typename Sequence, typename IndexMap, typename Value>
+pred_to_color<Sequence, IndexMap, Value, v_white>
+make_pred_to_color(const Sequence& seq, IndexMap index, Value v) {
+  return pred_to_color<Sequence, IndexMap, Value, v_white>(seq, index);
+}
 
 typedef compressed_sparse_row_graph<directedS, no_property, no_property, no_property, int64_t> Graph;
 static Graph *g;
@@ -124,7 +142,9 @@ make_bfs_tree (int64_t *bfs_tree_out, int64_t *max_vtx_out,
      boost::visitor(boost::make_bfs_visitor
                    (boost::record_predecessors(&p[0],
                                                boost::on_tree_edge()) ))
-     .buffer(buffer));
+     .buffer(buffer)
+     .color_map(make_pred_to_color<-1>(p, get(vertex_index, g), -1))
+     );
 //    for( int64_t i = 0; i < boost::num_vertices(graph); i++ )
 //      {bfs_tree_out[i] = p[i];}
 
