@@ -44,6 +44,17 @@ private:
   size_t _bottom, _top;
 };
 
+templat<typename Sequence>
+class pred_to_color {
+public:
+  pred_to_color(const Sequence &seq) : seq(seq) {}
+
+  template<typename T>
+  friend void put(T t)
+private:
+  const Sequence &seq;
+};
+
 typedef compressed_sparse_row_graph<directedS, no_property, no_property, no_property, int64_t> Graph;
 static Graph *g;
 
