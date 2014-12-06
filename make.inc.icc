@@ -1,0 +1,7 @@
+CFLAGS = -fast -ipo -ansi-alias -std=c99 -unroll-aggressive -opt-prefetch
+CXXFLAGS = -fast -ipo -ansi-alias -std=c++0x -unroll-aggressive -opt-prefetch -DBOOST_NO_CXX11_NULLPTR
+CC=cc
+CXX=CC
+AR=xiar
+LDLIBS = -lm -lrt
+CPPFLAGS = -DUSE_MMAP_LARGE -DUSE_MMAP_LARGE_EXT
