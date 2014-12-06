@@ -3,7 +3,7 @@
 # See COPYING for license.
 BUILD_OPENMP = No
 BUILD_XMT = No
-include make.inc
+include make.inc.icc
 
 GRAPH500_SOURCES=graph500.c options.c rmat.c kronecker.c verify.c prng.c \
 	xalloc.c timer.c 

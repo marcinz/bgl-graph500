@@ -5,6 +5,7 @@
 #define _THREAD_SAFE
 
 #define BOOST_GRAPH_USE_NEW_CSR_INTERFACE
+#define BOOST_NO_CXX11_NULLPTR
 
 #include <utility>
 #include <vector>
@@ -28,11 +29,11 @@ extern "C" {
 }
 
 template<typename T, typename Sequence = std::vector<T> >
-class queue {
+class vector_queue {
 public:
-  queue() : c(), _bottom(0), _top(0) {}
-  queue(size_t sz) : c(sz), _bottom(0), _top(0) {}
-  explicit queue(Sequence&& __c) : c(std::forward<Sequence>(__c)), _bottom(0), _top(0) {}
+  vector_queue() : c(), _bottom(0), _top(0) {}
+  vector_queue(size_t sz) : c(sz), _bottom(0), _top(0) {}
+  explicit vector_queue(Sequence&& __c) : c(std::forward<Sequence>(__c)), _bottom(0), _top(0) {}
   
   void push(T&& v) { c[_top++] = std::forward<T>(v); }
   void push(T& v) { c[_top++] = v; }
@@ -44,34 +45,59 @@ private:
   size_t _bottom, _top;
 };
 
-template<typename Sequence, typename IndexMap, typename Value, Value v_white>
+// template<typename Sequence, typename IndexMap, typename Value, Value v_white>
+// class pred_to_color {
+// public:
+//   pred_to_color(const Sequence &seq, const IndexMap& index = IndexMap()) : seq(seq), index(index) {}
+
+//   typedef typename property_traits<IndexMap>::key_type key_type;
+//   typedef one_bit_color_type value_type;
+//   typedef void reference;
+//   typedef read_write_property_map_tag category;
+
+//   template<typename T>
+//   friend void put(const pred_to_color& map, key_type k, value_type v) { }
+//   friend one_bit_color_type get(const pred_to_color& map, key_type k) {
+//     if(map.seq[get(map.index, k)] == v_white)
+//       return one_bit_white;
+//     else
+//       return one_bit_not_white;
+//   }
+// private:
+//   const Sequence &seq;
+//   const IndexMap index;
+// };
+
+// template<typename Sequence, typename IndexMap, typename Value>
+// pred_to_color<Sequence, IndexMap, Value, -1>
+// make_pred_to_color(const Sequence& seq, IndexMap index, Value v) {
+//   return pred_to_color<Sequence, IndexMap, Value, -1>(seq, index);
+// }
+
+template<typename PredMap, typename boost::property_traits<PredMap>::value_type white = -1>
 class pred_to_color {
 public:
-  pred_to_color(const Sequence &seq, const IndexMap& index = IndexMap()) : seq(seq), index(index) {}
-
-  typedef typename property_traits<IndexMap>::key_type key_type;
   typedef one_bit_color_type value_type;
   typedef void reference;
+  typedef typename boost::property_traits<PredMap>::key_type key_type;
   typedef read_write_property_map_tag category;
 
-  template<typename T>
   friend void put(const pred_to_color& map, key_type k, value_type v) { }
   friend one_bit_color_type get(const pred_to_color& map, key_type k) {
-    if(seq(get(index, k)) == v_white)
+    if(get(map.pmap, k) == white)
       return one_bit_white;
     else
       return one_bit_not_white;
-  }
+  }         
+
+  pred_to_color(const PredMap pmap) : pmap(pmap) {}
 private:
-  const Sequence &seq;
-  const IndexMap index;
+  const PredMap pmap;
 };
 
-template<Value v_white, typename Sequence, typename IndexMap, typename Value>
-pred_to_color<Sequence, IndexMap, Value, v_white>
-make_pred_to_color(const Sequence& seq, IndexMap index, Value v) {
-  return pred_to_color<Sequence, IndexMap, Value, v_white>(seq, index);
-}
+template<typename PredMap>
+pred_to_color<PredMap>
+make_pred_to_color(PredMap pmap) { return pred_to_color<PredMap>(pmap); }
 
 typedef compressed_sparse_row_graph<directedS, no_property, no_property, no_property, int64_t> Graph;
 static Graph *g;
@@ -136,14 +162,14 @@ make_bfs_tree (int64_t *bfs_tree_out, int64_t *max_vtx_out,
     p[k1] = -1;
   p[srcvtx] = srcvtx;
 
-  ::queue<Vertex> buffer(boost::num_vertices(graph));
+  vector_queue<Vertex> buffer(boost::num_vertices(graph));
   boost::breadth_first_search
     (graph, srcvtx, 
      boost::visitor(boost::make_bfs_visitor
-                   (boost::record_predecessors(&p[0],
+                   (boost::record_predecessors(p,
                                                boost::on_tree_edge()) ))
      .buffer(buffer)
-     .color_map(make_pred_to_color<-1>(p, get(vertex_index, g), -1))
+     .color_map(make_pred_to_color(p))
      );
 //    for( int64_t i = 0; i < boost::num_vertices(graph); i++ )
 //      {bfs_tree_out[i] = p[i];}
