@@ -2,8 +2,8 @@
 # Copyright 2010, Georgia Institute of Technology, USA.
 # See COPYING for license.
 #CFLAGS = -g -std=c99
-CFLAGS = -O3 -march=native -fgcse-sm -fgcse-las -fgcse-after-reload -floop-strip-mine -ftree-loop-im -fivopts -funswitch-loops -std=c99
-CXXFLAGS = -O3 -march=native -fgcse-sm -fgcse-las -fgcse-after-reload -floop-strip-mine -ftree-loop-im -fivopts -funswitch-loops -std=c++11
+CFLAGS = -O3 -funroll-loops -march=native -fgcse-sm -fgcse-las -fgcse-after-reload -floop-strip-mine -ftree-loop-im -fivopts -funswitch-loops -std=c99
+CXXFLAGS = -O3 -funroll-loops -march=native -fgcse-sm -fgcse-las -fgcse-after-reload -floop-strip-mine -ftree-loop-im -fivopts -funswitch-loops -std=c++11
 #CXXFLAGS = -g -O0 -std=c++11
 CC=cc
 CXX=CC
