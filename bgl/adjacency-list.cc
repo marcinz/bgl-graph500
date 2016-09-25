@@ -1,7 +1,7 @@
 #define _FILE_OFFSET_BITS 64
 #define _THREAD_SAFE
 
-#define BOOST_NO_CXX11_NULLPTR
+// #define BOOST_NO_CXX11_NULLPTR
 
 #include <utility>
 #include <boost/graph/graph_traits.hpp>
